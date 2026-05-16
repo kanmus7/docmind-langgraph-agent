@@ -68,6 +68,7 @@ Backend:
 
 ```bash
 OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-5.5
 PORT=3001
 CORS_ORIGIN=http://localhost:5173
 ```
@@ -159,6 +160,7 @@ Render environment variables:
 ```bash
 NODE_ENV=production
 OPENAI_API_KEY=<set as secret in Render>
+OPENAI_MODEL=gpt-5.5
 CORS_ORIGIN=<frontend production URL>
 ```
 

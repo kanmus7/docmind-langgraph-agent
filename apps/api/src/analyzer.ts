@@ -5,6 +5,7 @@ import type { DocMindAnalysis } from "@docmind/shared";
 
 const arraySchema = z.object({ items: z.array(z.string()) });
 const textSchema = z.object({ text: z.string() });
+const defaultOpenAIModel = "gpt-5.5";
 
 export const finalResponseSchema = z.object({
   summary: z.string(),
@@ -30,7 +31,7 @@ export async function runDocumentWorkflow(rawText: string): Promise<DocMindAnaly
   }
 
   const model = new ChatOpenAI({
-    model: "gpt-4o-mini",
+    model: process.env.OPENAI_MODEL ?? defaultOpenAIModel,
     temperature: 0
   });
 
