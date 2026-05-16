@@ -19,7 +19,7 @@ Supported files: PDF, XLSX, TXT, MD. Files are limited to 10MB.
 - LLM: OpenAI via `OPENAI_API_KEY`
 - Parsing: `pdf-parse`, `xlsx`, plain text reader
 - Testing: Vitest, Supertest, React Testing Library
-- Deployment: Render API + Vercel/GitHub Pages frontend
+- Deployment: Render API + Vercel frontend
 
 ## Why LangGraph
 
@@ -125,11 +125,11 @@ Production architecture:
 User -> Frontend -> Render API -> OpenAI API
 ```
 
-URLs:
+Production URLs:
 
-- Backend Render URL: `https://docmind-api.onrender.com` (placeholder until live)
+- Backend Render URL: `https://docmind-api.onrender.com` (placeholder until Render service is live)
 - Backend health check: `https://docmind-api.onrender.com/health`
-- Frontend Vercel/GitHub Pages URL: `https://your-frontend-url.example` (placeholder)
+- Frontend Vercel URL: `https://<frontend-url>` (placeholder until Vercel deploy is live)
 
 ### Render API
 
@@ -147,6 +147,13 @@ Create a Render Web Service:
 
 You can also use the committed `render.yaml` Blueprint from the Render Dashboard.
 
+Manual secret setup:
+
+1. Open Render Dashboard.
+2. Go to `docmind-api` -> Environment.
+3. Add `OPENAI_API_KEY` as a secret environment variable.
+4. Add `CORS_ORIGIN=https://<frontend-url>` after Vercel creates the frontend URL.
+
 Render environment variables:
 
 ```bash
@@ -161,6 +168,12 @@ Do not put `OPENAI_API_KEY` in frontend env vars or source code.
 
 Recommended: Vercel for the frontend, Render for the backend.
 
+Vercel project settings:
+
+- Root Directory: `apps/web`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+
 Set this frontend build env var:
 
 ```bash
@@ -173,7 +186,7 @@ The frontend calls:
 ${VITE_API_BASE_URL}/api/documents/summarize
 ```
 
-GitHub Pages deploys only the frontend via `.github/workflows/deploy-web.yml`.
+GitHub Pages deployment is disabled by default. Use Vercel for production frontend deploys.
 
 ## Future Improvements
 
