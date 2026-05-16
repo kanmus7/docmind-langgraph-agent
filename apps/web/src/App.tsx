@@ -2,7 +2,6 @@ import { type DragEvent, useState } from "react";
 import type { AnalyzeResponse } from "@docmind/shared";
 import { allowedMimeTypes, maxUploadBytes } from "@docmind/shared";
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001";
 const acceptedFormats = ["PDF", "XLSX", "TXT", "MD"];
 
 export function App() {
@@ -51,6 +50,11 @@ export function App() {
     setResult(null);
 
     try {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+      if (!apiBaseUrl) {
+        throw new Error("API URL is not configured. Set VITE_API_BASE_URL for this frontend deployment.");
+      }
+
       const body = new FormData();
       body.append("document", file);
 

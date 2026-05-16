@@ -1,11 +1,16 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { App } from "./App";
+
+beforeEach(() => {
+  vi.stubEnv("VITE_API_BASE_URL", "http://localhost:3001");
+});
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 describe("App", () => {
@@ -94,6 +99,17 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "Analyze document" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Backend failed.");
+  });
+
+  it("renders a configuration error when the API URL is missing", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "");
+    render(<App />);
+
+    const input = screen.getByLabelText(/drop your document/i);
+    await userEvent.upload(input, new File(["hello"], "notes.txt", { type: "text/plain" }));
+    await userEvent.click(screen.getByRole("button", { name: "Analyze document" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("API URL is not configured.");
   });
 
   it("validates unsupported file types", async () => {

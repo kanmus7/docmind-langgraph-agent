@@ -19,7 +19,7 @@ Supported files: PDF, XLSX, TXT, MD. Files are limited to 10MB.
 - LLM: OpenAI via `OPENAI_API_KEY`
 - Parsing: `pdf-parse`, `xlsx`, plain text reader
 - Testing: Vitest, Supertest, React Testing Library
-- Deployment: GitHub Pages for frontend
+- Deployment: Render API + Vercel/GitHub Pages frontend
 
 ## Why LangGraph
 
@@ -69,6 +69,7 @@ Backend:
 ```bash
 OPENAI_API_KEY=your_openai_api_key
 PORT=3001
+CORS_ORIGIN=http://localhost:5173
 ```
 
 Frontend:
@@ -118,15 +119,61 @@ npm run lint
 
 ## Deployment
 
+Production architecture:
+
+```txt
+User -> Frontend -> Render API -> OpenAI API
+```
+
+URLs:
+
+- Backend Render URL: `https://docmind-api.onrender.com` (placeholder until live)
+- Backend health check: `https://docmind-api.onrender.com/health`
+- Frontend Vercel/GitHub Pages URL: `https://your-frontend-url.example` (placeholder)
+
+### Render API
+
+Create a Render Web Service:
+
+- Name: `docmind-api`
+- Runtime: Node
+- Repository: `kanmus7/docmind-langgraph-agent`
+- Branch: `main`
+- Root Directory: `apps/api`
+- Build Command: `npm install && npm run build`
+- Start Command: `npm run start`
+- Health Check Path: `/health`
+- Plan: free
+
+You can also use the committed `render.yaml` Blueprint from the Render Dashboard.
+
+Render environment variables:
+
+```bash
+NODE_ENV=production
+OPENAI_API_KEY=<set as secret in Render>
+CORS_ORIGIN=<frontend production URL>
+```
+
+Do not put `OPENAI_API_KEY` in frontend env vars or source code.
+
+### Frontend
+
+Recommended: Vercel for the frontend, Render for the backend.
+
+Set this frontend build env var:
+
+```bash
+VITE_API_BASE_URL=https://docmind-api.onrender.com
+```
+
+The frontend calls:
+
+```txt
+${VITE_API_BASE_URL}/api/documents/summarize
+```
+
 GitHub Pages deploys only the frontend via `.github/workflows/deploy-web.yml`.
-
-The backend must run locally or be deployed separately. Good future targets:
-
-- Render
-- Railway
-- Fly.io
-
-When using a deployed backend, set `VITE_API_BASE_URL` for the frontend build.
 
 ## Future Improvements
 

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: docmind-api
+    runtime: node
+    plan: free
+    repo: https://github.com/kanmus7/docmind-langgraph-agent
+    branch: main
+    rootDir: apps/api
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

@@ -20,11 +20,11 @@ export function createApp(options: AppOptions = {}) {
   const app = express();
   const summarizeDocument = options.summarizeDocument ?? runDocumentWorkflow;
 
-  app.use(cors({ origin: process.env.WEB_ORIGIN ?? "http://localhost:5173" }));
+  app.use(cors({ origin: process.env.CORS_ORIGIN ?? "http://localhost:5173" }));
   app.use(express.json());
 
   app.get("/health", (_req, res) => {
-    res.json({ ok: true });
+    res.json({ status: "ok" });
   });
 
   app.post("/api/documents/summarize", upload.single("document"), async (req, res, next) => {
