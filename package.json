@@ -1,0 +1,21 @@
+{
+  "name": "docmind",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm run dev -w @docmind/web",
+    "dev:api": "npm run dev -w @docmind/api",
+    "build": "npm run build -w @docmind/shared && npm run build -w @docmind/api && npm run build -w @docmind/web",
+    "test": "npm run test -ws --if-present",
+    "lint": "npm run lint -ws --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3"
+  }
+}
