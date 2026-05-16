@@ -10,6 +10,14 @@ describe("api", () => {
     expect(res.body).toEqual({ status: "ok" });
   });
 
+  it("allows local Vite origins", async () => {
+    const res = await request(createApp())
+      .get("/health")
+      .set("Origin", "http://127.0.0.1:5173");
+
+    expect(res.headers["access-control-allow-origin"]).toBe("http://127.0.0.1:5173");
+  });
+
   it("requires a document upload", async () => {
     const res = await request(createApp()).post("/api/documents/summarize");
 

@@ -13,6 +13,8 @@ const upload = multer({
   limits: { fileSize: maxUploadBytes }
 });
 
+const defaultCorsOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+
 type AppOptions = {
   summarizeDocument?: (rawText: string) => Promise<DocMindAnalysis>;
 };
@@ -21,7 +23,7 @@ export function createApp(options: AppOptions = {}) {
   const app = express();
   const summarizeDocument = options.summarizeDocument ?? runDocumentWorkflow;
 
-  app.use(cors({ origin: process.env.CORS_ORIGIN ?? "http://localhost:5173" }));
+  app.use(cors({ origin: process.env.CORS_ORIGIN ?? defaultCorsOrigins }));
   app.use(express.json());
 
   app.get("/health", (_req: Request, res: Response) => {
