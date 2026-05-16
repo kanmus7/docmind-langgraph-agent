@@ -59,6 +59,28 @@ describe("App", () => {
     expect(screen.getByText("A short summary.")).toBeInTheDocument();
   });
 
+  it("renders API warnings when present", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        summary: "A short summary.",
+        keyIdeas: ["First idea"],
+        importantDetails: [],
+        conclusion: "Final conclusion.",
+        warnings: ["OPENAI_API_KEY is not set; fallback analysis was used."]
+      })
+    } as Response);
+
+    render(<App />);
+
+    const input = screen.getByLabelText(/drop your document/i);
+    await userEvent.upload(input, new File(["hello"], "notes.txt", { type: "text/plain" }));
+    await userEvent.click(screen.getByRole("button", { name: "Analyze document" }));
+
+    expect(await screen.findByText("Warnings")).toBeInTheDocument();
+    expect(screen.getByText("OPENAI_API_KEY is not set; fallback analysis was used.")).toBeInTheDocument();
+  });
+
   it("renders an API error message", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
       ok: false,

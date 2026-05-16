@@ -172,6 +172,7 @@ export function App() {
               <ResultSection title="Key ideas" items={result.keyIdeas} />
               <ResultSection title="Important details" items={result.importantDetails} />
               <ResultSection title="Conclusion" items={[result.conclusion]} />
+              {result.warnings.length > 0 && <ResultSection title="Warnings" items={result.warnings} />}
             </article>
           )}
         </div>
