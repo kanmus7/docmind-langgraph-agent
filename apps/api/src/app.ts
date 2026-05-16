@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import multer from "multer";
+import type { NextFunction, Request, Response } from "express";
 import { maxUploadBytes, type DocMindAnalysis } from "@docmind/shared";
 import { runDocumentWorkflow } from "./analyzer.js";
 import { HttpError } from "./errors.js";
@@ -23,11 +24,11 @@ export function createApp(options: AppOptions = {}) {
   app.use(cors({ origin: process.env.CORS_ORIGIN ?? "http://localhost:5173" }));
   app.use(express.json());
 
-  app.get("/health", (_req, res) => {
+  app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok" });
   });
 
-  app.post("/api/documents/summarize", upload.single("document"), async (req, res, next) => {
+  app.post("/api/documents/summarize", upload.single("document"), async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
         throw new HttpError(400, "Document file is required.");
@@ -47,7 +48,7 @@ export function createApp(options: AppOptions = {}) {
     }
   });
 
-  app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
       return res.status(400).json({ error: "File exceeds 10MB limit." });
     }
@@ -56,7 +57,7 @@ export function createApp(options: AppOptions = {}) {
       return res.status(error.statusCode).json({ error: error.message });
     }
 
-    console.error(error);
+    console.error(error instanceof Error ? error.message : "Unknown API error");
     return res.status(500).json({ error: "Unable to summarize document." });
   });
 

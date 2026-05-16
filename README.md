@@ -140,7 +140,7 @@ Create a Render Web Service:
 - Repository: `kanmus7/docmind-langgraph-agent`
 - Branch: `main`
 - Root Directory: `apps/api`
-- Build Command: `npm install && npm run build`
+- Build Command: `npm install --include=dev && npm run build`
 - Start Command: `npm run start`
 - Health Check Path: `/health`
 - Plan: free

@@ -1,6 +1,7 @@
 import path from "node:path";
 import pdfParse from "pdf-parse";
 import xlsx from "xlsx";
+import type { Express } from "express";
 
 export async function extractText(file: Express.Multer.File): Promise<string> {
   const ext = path.extname(file.originalname).toLowerCase();

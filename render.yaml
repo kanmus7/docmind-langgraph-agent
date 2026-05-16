@@ -6,7 +6,7 @@ services:
     repo: https://github.com/kanmus7/docmind-langgraph-agent
     branch: main
     rootDir: apps/api
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /health
     envVars:

@@ -2,6 +2,7 @@ import path from "node:path";
 import { z } from "zod";
 import { allowedMimeTypes } from "@docmind/shared";
 import { HttpError } from "./errors.js";
+import type { Express } from "express";
 
 const allowedExtensions = [".pdf", ".xlsx", ".xls", ".txt", ".md"];
 
