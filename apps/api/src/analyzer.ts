@@ -114,11 +114,16 @@ export async function runDocumentWorkflow(rawText: string): Promise<DocMindAnaly
     .addEdge("formatFinalResponse", "__end__")
     .compile();
 
-  const result = await graph.invoke({ rawText });
-  return finalResponseSchema.parse(result);
+  try {
+    const result = await graph.invoke({ rawText });
+    return finalResponseSchema.parse(result);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : "OpenAI analysis failed.");
+    return fallbackAnalysis(rawText, "OpenAI analysis failed; fallback analysis was used.");
+  }
 }
 
-function fallbackAnalysis(text: string): DocMindAnalysis {
+function fallbackAnalysis(text: string, warning?: string): DocMindAnalysis {
   const compact = text.replace(/\s+/g, " ").trim();
   const preview = compact.slice(0, 280) || "No readable text found.";
 
@@ -126,9 +131,9 @@ function fallbackAnalysis(text: string): DocMindAnalysis {
     summary: preview,
     keyIdeas: compact ? [preview] : ["No readable text extracted."],
     importantDetails: [],
-    conclusion: process.env.NODE_ENV === "test"
+    conclusion: warning || process.env.NODE_ENV === "test"
       ? "Fallback analysis used."
       : "Set OPENAI_API_KEY to enable LangGraph/OpenAI analysis.",
-    warnings: process.env.OPENAI_API_KEY ? [] : ["OPENAI_API_KEY is not set; fallback analysis was used."]
+    warnings: warning ? [warning] : ["OPENAI_API_KEY is not set; fallback analysis was used."]
   };
 }
