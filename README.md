@@ -139,9 +139,9 @@ Create a Render Web Service:
 - Runtime: Node
 - Repository: `kanmus7/docmind-langgraph-agent`
 - Branch: `main`
-- Root Directory: `apps/api`
-- Build Command: `npm install --include=dev && npm run build`
-- Start Command: `npm run start`
+- Root Directory: repository root
+- Build Command: `npm install && npm run build --workspace @docmind/api`
+- Start Command: `npm run start --workspace @docmind/api`
 - Health Check Path: `/health`
 - Plan: free
 
