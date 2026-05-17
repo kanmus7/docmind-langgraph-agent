@@ -4,16 +4,24 @@ import { allowedMimeTypes, maxUploadBytes } from "@docmind/shared";
 
 const acceptedFormats = ["PDF", "XLSX", "TXT", "MD"];
 
+type ApiError = {
+  code: string;
+  message: string;
+  action: string;
+};
+
 export function App() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [error, setError] = useState("");
+  const [apiError, setApiError] = useState<ApiError | null>(null);
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
   function onFileChange(nextFile: File | undefined) {
     setResult(null);
     setError("");
+    setApiError(null);
 
     if (!nextFile) {
       setFile(null);
@@ -47,6 +55,7 @@ export function App() {
 
     setLoading(true);
     setError("");
+    setApiError(null);
     setResult(null);
 
     try {
@@ -65,7 +74,12 @@ export function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Unable to analyze document.");
+        if (isApiError(data.error)) {
+          setApiError(data.error);
+          return;
+        }
+
+        throw new Error(typeof data.error === "string" ? data.error : "Unable to analyze document.");
       }
 
       setResult(data);
@@ -80,6 +94,7 @@ export function App() {
     setFile(null);
     setResult(null);
     setError("");
+    setApiError(null);
   }
 
   return (
@@ -169,6 +184,15 @@ export function App() {
             </div>
           )}
 
+          {apiError && (
+            <article className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-amber-950 shadow-sm" role="alert">
+              <h2 className="text-lg font-semibold">AI analysis unavailable</h2>
+              <p className="mt-2 text-sm">AI analysis is unavailable right now.</p>
+              <p className="mt-2 text-sm">{apiError.message}</p>
+              <p className="mt-3 text-sm font-medium">{apiError.action}</p>
+            </article>
+          )}
+
           {result && (
             <article className="grid gap-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="text-2xl font-semibold text-slate-950">Analysis result</h2>
@@ -182,6 +206,16 @@ export function App() {
         </div>
       </section>
     </main>
+  );
+}
+
+function isApiError(value: unknown): value is ApiError {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "code" in value &&
+      "message" in value &&
+      "action" in value
   );
 }
 

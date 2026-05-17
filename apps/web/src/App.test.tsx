@@ -101,6 +101,30 @@ describe("App", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Backend failed.");
   });
 
+  it("renders AI unavailable state for classified provider errors", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({
+        error: {
+          code: "insufficient_quota",
+          message: "AI analysis is unavailable right now. The OpenAI project has insufficient quota.",
+          action: "Check Render OPENAI_API_KEY, OpenAI billing/quota, selected model access, and redeploy the service."
+        }
+      })
+    } as Response);
+
+    render(<App />);
+
+    const input = screen.getByLabelText(/drop your document/i);
+    await userEvent.upload(input, new File(["hello"], "notes.txt", { type: "text/plain" }));
+    await userEvent.click(screen.getByRole("button", { name: "Analyze document" }));
+
+    expect(await screen.findByRole("heading", { name: "AI analysis unavailable" })).toBeInTheDocument();
+    expect(screen.getByText("AI analysis is unavailable right now.")).toBeInTheDocument();
+    expect(screen.getByText("Check Render OPENAI_API_KEY, OpenAI billing/quota, selected model access, and redeploy the service.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Analysis result" })).not.toBeInTheDocument();
+  });
+
   it("renders a configuration error when the API URL is missing", async () => {
     vi.stubEnv("VITE_API_BASE_URL", "");
     render(<App />);

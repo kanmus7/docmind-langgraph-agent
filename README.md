@@ -62,6 +62,18 @@ API response:
 }
 ```
 
+Provider error response:
+
+```json
+{
+  "error": {
+    "code": "missing_api_key",
+    "message": "AI analysis is unavailable right now.",
+    "action": "Check Render OPENAI_API_KEY, OpenAI billing/quota, selected model access, and redeploy the service."
+  }
+}
+```
+
 ## Environment Variables
 
 Backend:
@@ -165,6 +177,23 @@ CORS_ORIGIN=<frontend production URL>
 ```
 
 Do not put `OPENAI_API_KEY` in frontend env vars or source code.
+
+After each Render deploy, verify:
+
+1. `GET https://docmind-api-aat4.onrender.com/health`
+   - expected: `{ "status": "ok" }`
+2. `GET https://docmind-api-aat4.onrender.com/health/config`
+   - expected: `openAiConfigured: true`
+   - this endpoint never returns the actual key
+3. `GET https://docmind-api-aat4.onrender.com/api/ai/smoke-test`
+   - expected: `{ "status": "ok", "provider": "openai" }`
+
+If the smoke test fails:
+
+- verify `OPENAI_API_KEY` in Render
+- verify OpenAI billing/quota
+- verify the key has access to `OPENAI_MODEL`
+- redeploy Render after env var changes
 
 ### Frontend
 
