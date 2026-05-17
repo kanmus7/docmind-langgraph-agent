@@ -16,6 +16,7 @@ const upload = multer({
 });
 
 const defaultCorsOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const vercelOriginPattern = /^https:\/\/docmind-langgraph-agent.*\.vercel\.app$/;
 
 type AppOptions = {
   summarizeDocument?: (rawText: string) => Promise<DocMindAnalysis>;
@@ -27,7 +28,16 @@ export function createApp(options: AppOptions = {}) {
   const summarizeDocument = options.summarizeDocument ?? runDocumentWorkflow;
   const smokeTest = options.smokeTest ?? runOpenAISmokeTest;
 
-  app.use(cors({ origin: process.env.CORS_ORIGIN ?? defaultCorsOrigins }));
+  app.use(cors({
+    origin(origin, callback) {
+      if (!origin || isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin is not allowed by CORS."));
+    }
+  }));
   app.use(express.json());
 
   app.get("/health", (_req: Request, res: Response) => {
@@ -89,4 +99,16 @@ export function createApp(options: AppOptions = {}) {
   });
 
   return app;
+}
+
+function isAllowedOrigin(origin: string) {
+  const configuredOrigins = (process.env.CORS_ORIGIN ?? "")
+    .split(",")
+    .map((value) => value.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+
+  return [
+    ...defaultCorsOrigins,
+    ...configuredOrigins
+  ].includes(origin.replace(/\/$/, "")) || vercelOriginPattern.test(origin);
 }

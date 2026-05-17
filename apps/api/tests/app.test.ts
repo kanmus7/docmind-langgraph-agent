@@ -19,6 +19,31 @@ describe("api", () => {
     expect(res.headers["access-control-allow-origin"]).toBe("http://127.0.0.1:5173");
   });
 
+  it("allows DocMind Vercel origins", async () => {
+    const res = await request(createApp())
+      .get("/health")
+      .set("Origin", "https://docmind-langgraph-agent-web.vercel.app");
+
+    expect(res.headers["access-control-allow-origin"]).toBe("https://docmind-langgraph-agent-web.vercel.app");
+  });
+
+  it("allows comma-separated configured origins without trailing slash issues", async () => {
+    const originalCorsOrigin = process.env.CORS_ORIGIN;
+    process.env.CORS_ORIGIN = "https://example-one.com/, https://example-two.com";
+
+    const res = await request(createApp())
+      .get("/health")
+      .set("Origin", "https://example-one.com");
+
+    if (originalCorsOrigin) {
+      process.env.CORS_ORIGIN = originalCorsOrigin;
+    } else {
+      delete process.env.CORS_ORIGIN;
+    }
+
+    expect(res.headers["access-control-allow-origin"]).toBe("https://example-one.com");
+  });
+
   it("returns safe config health without leaking secrets", async () => {
     const originalApiKey = process.env.OPENAI_API_KEY;
     process.env.OPENAI_API_KEY = "sk-test-secret";
