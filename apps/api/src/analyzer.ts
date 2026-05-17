@@ -1,12 +1,11 @@
-import { ChatOpenAI } from "@langchain/openai";
 import { StateGraph, Annotation } from "@langchain/langgraph";
 import { z } from "zod";
 import type { DocMindAnalysis } from "@docmind/shared";
 import { classifyProviderError, logProviderError, missingOpenAIKeyError } from "./providerErrors.js";
+import { createOpenAIChatModel } from "./openaiClient.js";
 
 const arraySchema = z.object({ items: z.array(z.string()) });
 const textSchema = z.object({ text: z.string() });
-const defaultOpenAIModel = "gpt-5.5";
 
 export const finalResponseSchema = z.object({
   summary: z.string(),
@@ -31,11 +30,7 @@ export async function runDocumentWorkflow(rawText: string): Promise<DocMindAnaly
     throw missingOpenAIKeyError();
   }
 
-  const model = new ChatOpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    model: process.env.OPENAI_MODEL ?? defaultOpenAIModel,
-    temperature: 0
-  });
+  const model = createOpenAIChatModel();
 
   const summaryModel = model.withStructuredOutput(textSchema);
   const listModel = model.withStructuredOutput(arraySchema);
