@@ -19,11 +19,9 @@ DocMind solves a common knowledge-work problem: extracting useful information fr
 LangGraph was chosen because document analysis is naturally a workflow. The application does not only ask one question; it performs multiple ordered steps:
 
 1. normalize document text
-2. summarize the content
-3. extract key ideas
-4. extract important details
-5. generate a conclusion
-6. validate the final response
+2. make one structured AI analysis call
+3. propagate summary, key ideas, details, and conclusion through graph state
+4. validate the final response
 
 This makes DocMind a useful learning project for production AI systems. Real AI applications require orchestration, validation, observability, provider failure handling, environment management, cost awareness, and deployment discipline. These concerns are different from traditional CRUD applications because the main dependency is probabilistic, remote, metered, and failure-prone.
 
@@ -366,19 +364,19 @@ Normalizes whitespace and trims extracted text. It also records a warning when t
 
 #### summarizeDocument
 
-Calls the model and requests a concise summary. The result is structured with a Zod schema containing a `text` field.
+Calls the model once and requests the complete structured analysis. This node returns the summary, key ideas, important details, conclusion, and warnings in one validated response.
 
 #### extractKeyIdeas
 
-Asks the model for 3 to 7 key ideas and expects a structured array response.
+Propagates the key ideas field through the graph. Earlier versions called the model separately here, but the current production workflow avoids that extra provider call for latency and cost reasons.
 
 #### extractImportantDetails
 
-Extracts concrete facts, decisions, dates, numbers, constraints, or other important details.
+Propagates the important details field through the graph. Keeping this node preserves the explicit pipeline shape while avoiding unnecessary sequential model calls.
 
 #### generateConclusion
 
-Uses the previous summary, key ideas, and important details to generate a practical conclusion.
+Propagates the conclusion field through the graph.
 
 #### formatFinalResponse
 
@@ -386,7 +384,7 @@ Validates the final graph state against the shared response shape.
 
 ### Why This Is Better Than a Single Prompt
 
-A single prompt is simple, but it has limitations:
+A single unstructured prompt is simple, but it has limitations:
 
 - all instructions compete inside one model call
 - intermediate outputs are harder to inspect
@@ -394,7 +392,7 @@ A single prompt is simple, but it has limitations:
 - future branching or retries become messy
 - structured response validation is harder to reason about
 
-LangGraph makes the workflow explicit. Each step has a name, responsibility, input state, and output state. This creates a better foundation for production AI systems.
+LangGraph makes the workflow explicit. Each step has a name, responsibility, input state, and output state. In the current implementation, the expensive provider work is consolidated into one structured call to reduce latency while keeping the graph available for future branching, retries, and chunk-level processing.
 
 ### Future Workflow Expansion
 

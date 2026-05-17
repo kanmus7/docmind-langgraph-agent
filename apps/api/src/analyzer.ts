@@ -4,9 +4,6 @@ import type { DocMindAnalysis } from "@docmind/shared";
 import { classifyProviderError, logProviderError, missingOpenAIKeyError } from "./providerErrors.js";
 import { createOpenAIChatModel } from "./openaiClient.js";
 
-const arraySchema = z.object({ items: z.array(z.string()) });
-const textSchema = z.object({ text: z.string() });
-
 export const finalResponseSchema = z.object({
   summary: z.string(),
   keyIdeas: z.array(z.string()),
@@ -25,77 +22,51 @@ const GraphState = Annotation.Root({
   warnings: Annotation<string[]>()
 });
 
+const analysisInputLimit = 12000;
+
 export async function runDocumentWorkflow(rawText: string): Promise<DocMindAnalysis> {
   if (!process.env.OPENAI_API_KEY) {
     throw missingOpenAIKeyError();
   }
 
   const model = createOpenAIChatModel();
-
-  const summaryModel = model.withStructuredOutput(textSchema);
-  const listModel = model.withStructuredOutput(arraySchema);
+  const analysisModel = model.withStructuredOutput(finalResponseSchema);
 
   const graph = new StateGraph(GraphState)
     .addNode("normalizeDocumentText", async (state) => ({
       normalizedText: state.rawText.replace(/\s+/g, " ").trim(),
-      warnings: state.rawText.length > 20000 ? ["Document was truncated for LLM processing."] : []
+      warnings: state.rawText.length > analysisInputLimit ? ["Document was truncated for LLM processing."] : []
     }))
     .addNode("summarizeDocument", async (state) => {
-      const result = await summaryModel.invoke([
+      const result = await analysisModel.invoke([
         {
           role: "system",
-          content: "Create a concise document summary. Return JSON with a text field only."
+          content: [
+            "Analyze the document and return only structured JSON matching the requested schema.",
+            "summary: 2 to 4 concise sentences.",
+            "keyIdeas: 3 to 7 short, clear bullet-style ideas.",
+            "importantDetails: concrete facts, decisions, dates, numbers, obligations, constraints, or notable terms.",
+            "conclusion: one short practical conclusion.",
+            "warnings: preserve any existing processing warnings if relevant; otherwise return an empty array."
+          ].join(" ")
         },
         {
           role: "user",
-          content: state.normalizedText.slice(0, 20000)
+          content: state.normalizedText.slice(0, analysisInputLimit)
         }
       ]);
 
-      return { summary: result.text };
+      return {
+        summary: result.summary,
+        keyIdeas: result.keyIdeas,
+        importantDetails: result.importantDetails,
+        conclusion: result.conclusion,
+        warnings: [...(state.warnings ?? []), ...(result.warnings ?? [])]
+      };
     })
-    .addNode("extractKeyIdeas", async (state) => {
-      const result = await listModel.invoke([
-        {
-          role: "system",
-          content: "Extract 3 to 7 key ideas from the document. Return JSON with an items array only."
-        },
-        {
-          role: "user",
-          content: state.normalizedText.slice(0, 20000)
-        }
-      ]);
-
-      return { keyIdeas: result.items };
-    })
-    .addNode("extractImportantDetails", async (state) => {
-      const result = await listModel.invoke([
-        {
-          role: "system",
-          content: "Extract important concrete details, facts, decisions, dates, numbers, or constraints. Return JSON with an items array only."
-        },
-        {
-          role: "user",
-          content: state.normalizedText.slice(0, 20000)
-        }
-      ]);
-
-      return { importantDetails: result.items };
-    })
-    .addNode("generateConclusion", async (state) => {
-      const result = await summaryModel.invoke([
-        {
-          role: "system",
-          content: "Write a short practical conclusion from the document. Return JSON with a text field only."
-        },
-        {
-          role: "user",
-          content: `Summary: ${state.summary}\nKey ideas: ${state.keyIdeas.join("; ")}\nDetails: ${state.importantDetails.join("; ")}`
-        }
-      ]);
-
-      return { conclusion: result.text };
-    })
+    .addNode("extractKeyIdeas", async (state) => ({ keyIdeas: state.keyIdeas }))
+    .addNode("extractImportantDetails", async (state) => ({ importantDetails: state.importantDetails }))
+    .addNode("generateConclusion", async (state) => ({ conclusion: state.conclusion }))
     .addNode("formatFinalResponse", async (state) => finalResponseSchema.parse({
       summary: state.summary,
       keyIdeas: state.keyIdeas,
